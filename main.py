@@ -61,9 +61,9 @@ def main():
             "🎳 Running the App",
             "🔑 Session State",
             "👋 Hands-on Activity",
-            "🎓 Wrap-up",
             "🎨 CSS Wrapping",
-            '🧠 Quizzes'
+            '🧠 Quizzes',
+            "🎓 Wrap-up",
         ]
         selected_streamlit_section = st.radio("Navigation", streamlit_sections)
 
@@ -82,12 +82,12 @@ def main():
             sess_state_page()
         elif selected_streamlit_section == "👋 Hands-on Activity":
             hands_on_activity_page()
-        elif selected_streamlit_section == "🎓 Wrap-up":
-            wrap_up_page()
         elif selected_streamlit_section == "🎨 CSS Wrapping":  
             css_wrapping_page()
         elif selected_streamlit_section == "🧠 Quizzes":
             display_quiz_page()
+        elif selected_streamlit_section == "🎓 Wrap-up":
+            wrap_up_page()
 
 
 if __name__ == "__main__":

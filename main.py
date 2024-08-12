@@ -54,74 +54,85 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+def display_streamlit_content(subsection):
+    if subsection == '☕ 1.0 Home':
+        landing_page()
+    elif subsection == "🧰 1.1 Setup":
+        setup_page()
+    elif subsection == "🧱 1.2 Basic Elements":
+        basic_elements_page()
+    elif subsection == "🔢 1.3 Interactive App":
+        interactive_app_page()
+    elif subsection == "🎳 1.4 Running the App":
+        running_app_page()
+    elif subsection == '🔑 1.5 Session State':
+        sess_state_page()
+    elif subsection == "👋 1.6 Hands-on Activity":
+        hands_on_activity_page()
+    elif subsection == "🎨 1.7 CSS Wrapping":  
+        css_wrapping_page()
+    elif subsection == "🧠 1.8 Quizzes":
+        display_quiz_page()
+    elif subsection == "🎓 1.9 Wrap-up":
+        wrap_up_page()
+
+def display_github_content(subsection):
+    if subsection == "📘 2.0 Introduction to Git":
+        intro_to_git()
+    elif subsection == "🌿 2.1 Branching and Merging":
+        pass
+    elif subsection == "🔄 2.2 Pull Requests":
+        pass
+    elif subsection == "🚀 2.3 GitHub Actions":
+        pass
+    elif subsection == "📊 2.4 GitHub Projects":
+        pass
+    elif subsection == "🧠 2.5 Quizzes":
+        pass
+    elif subsection == "🎓 2.6 Wrap-up":
+        pass
 
 def main():
     st.sidebar.title("🚀 Streamlit Masterclass")
-    with st.sidebar.expander('Intro to Streamlit', expanded=False):
-        streamlit_sections = [
-            '☕ Home',
-            "🧰 Setup",
-            "🧱 Basic Elements",
-            "🔢 Interactive App",
-            "🎳 Running the App",
-            "🔑 Session State",
-            "👋 Hands-on Activity",
-            "🎨 CSS Wrapping",
-            '🧠 Quizzes',
-            "🎓 Wrap-up",
-            ]
-        selected_streamlit_section = st.radio("Streamlit Topics", streamlit_sections)
 
-    with st.sidebar.expander('Github Lessons', expanded=True):
-        github_sections = [
-            "📘 Introduction to Git",
-            "🌿 Branching and Merging",
-            "🔄 Pull Requests",
-            "🚀 GitHub Actions",
-            "📊 GitHub Projects",
-            '🧠 Quizzes',
-            "🎓 Wrap-up",
-            ]
+    # use session state
+    if 'active_section' not in st.session_state:
+        st.session_state.active_section = None
+    
+    with st.sidebar.expander('Your Journey Begins Here'):
+        streamlit_section = st.radio('Choose a subsection:',
+            ['☕ 1.0 Home',
+            "🧰 1.1 Setup",
+            "🧱 1.2 Basic Elements",
+            "🔢 1.3 Interactive App",
+            "🎳 1.4 Running the App",
+            "🔑 1.5 Session State",
+            "👋 1.6 Hands-on Activity",
+            "🎨 1.7 CSS Wrapping",
+            '🧠 1.8 Quizzes',
+            "🎓 1.9 Wrap-up",],
+        key='intro')
+        if st.button('Activate Streamlit Section', key='streamlit_button'):
+            st.session_state.active_section = 'intro'
 
-        selected_github_section = st.radio('Github Topics', github_sections)
-
-    if selected_streamlit_section:
-        if selected_streamlit_section == '☕ Home':
-            landing_page()
-        elif selected_streamlit_section == "🧰 Setup":
-            setup_page()
-        elif selected_streamlit_section == "🧱 Basic Elements":
-            basic_elements_page()
-        elif selected_streamlit_section == "🔢 Interactive App":
-            interactive_app_page()
-        elif selected_streamlit_section == "🎳 Running the App":
-            running_app_page()
-        elif selected_streamlit_section == '🔑 Session State':
-            sess_state_page()
-        elif selected_streamlit_section == "👋 Hands-on Activity":
-            hands_on_activity_page()
-        elif selected_streamlit_section == "🎨 CSS Wrapping":  
-            css_wrapping_page()
-        elif selected_streamlit_section == "🧠 Quizzes":
-            display_quiz_page()
-        elif selected_streamlit_section == "🎓 Wrap-up":
-            wrap_up_page()
-
-    elif selected_github_section:
-        if selected_github_section == "📘 Introduction to Git":
-            intro_to_git()
-        elif selected_github_section == "🌿 Branching and Merging":
-            pass
-        elif selected_github_section == "🔄 Pull Requests":
-            pass
-        elif selected_github_section == "🚀 GitHub Actions":
-            pass
-        elif selected_github_section == "📊 GitHub Projects":
-            pass
-        elif selected_github_section == "🧠 Quizzes":
-            pass
-        elif selected_github_section == "🎓 Wrap-up":
-            pass
+    with st.sidebar.expander('Github Lessons'):
+        github_section = st.radio('Choose a subsection:',
+            ["📘 2.0 Introduction to Git",
+            "🌿 2.1 Branching and Merging",
+            "🔄 2.2 Pull Requests",
+            "🚀 2.3 GitHub Actions",
+            "📊 2.4 GitHub Projects",
+            '🧠 2.5 Quizzes',
+            "🎓 2.6 Wrap-up",],
+        key='github')
+        if st.button('Activate Github Section', key='github_button'):
+            st.session_state.active_section = 'github'
         
+    # Main section
+    if st.session_state.active_section == 'intro':
+        display_streamlit_content(streamlit_section)
+    elif st.session_state.active_section == 'github':
+        display_github_content(github_section)
+
 if __name__ == "__main__":
     main()

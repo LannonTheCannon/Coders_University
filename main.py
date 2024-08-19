@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 import time
+import openai
 
 # Streamlit Fundamentals Library 
 from src.streamlit_fundamentals.landing_1 import landing_page
@@ -25,6 +26,58 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+# Chatbot functions
+ASSISTANT_ID = 'asst_mgnLV1tlOpmytiq1eUCixZ0N'
+THREAD_ID = 'thread_gpesqxGVn0zvniW08rTWhitW'
+
+def wait_for_run_complete(client, thread_id, run_id):
+    while True:
+        run = client.beta.threads.runs.retrieve(thread_id=thread_id, run_id=run_id)
+        if run.completed_at:
+            return run.status
+        time.sleep(1)
+
+def get_assistant_response(client, user_input):
+    client.beta.threads.messages.create(
+        thread_id=THREAD_ID,
+        role='user',
+        content=user_input
+    )
+    run = client.beta.threads.runs.create(
+        thread_id=THREAD_ID,
+        assistant_id=ASSISTANT_ID
+    )
+    wait_for_run_complete(client, THREAD_ID, run.id)
+    messages = client.beta.threads.messages.list(thread_id=THREAD_ID)
+    return messages.data[0].content[0].text.value
+
+def display_chatbot():
+    st.title("🤖 AI Assistant")
+    
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    if "openai_api_key" in st.session_state and st.session_state.openai_api_key:
+        client = openai.OpenAI(api_key=st.session_state.openai_api_key)
+        prompt = st.chat_input("Ask me anything about Streamlit or GitHub!")
+        if prompt:
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
+            with st.chat_message("assistant"):
+                message_placeholder = st.empty()
+                full_response = get_assistant_response(client, prompt)
+                message_placeholder.markdown(full_response)
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
+    else:
+        st.warning("Please enter your OpenAI API key in the sidebar to start the chat.")
+
+
 
 # Custom CSS
 # noinspection PyInterpreter
@@ -95,6 +148,13 @@ def display_github_content(subsection):
 def main():
     st.sidebar.title("🚀 Streamlit Masterclass")
 
+        # API key input in sidebar
+    st.sidebar.title("Setup")
+    api_key = st.sidebar.text_input("Enter your OpenAI API Key", type="password")
+    if api_key:
+        st.session_state.openai_api_key = api_key
+
+
     # use session state
     if 'active_section' not in st.session_state:
         st.session_state.active_section = None
@@ -127,12 +187,19 @@ def main():
         key='github')
         if st.button('Activate Github Section', key='github_button'):
             st.session_state.active_section = 'github'
+
+        # Add new expander for AI Assistant
+    with st.sidebar.expander('AI Assistant'):
+        if st.button('Activate AI Assistant', key='ai_assistant_button'):
+            st.session_state.active_section = 'ai_assistant'
         
     # Main section
     if st.session_state.active_section == 'intro':
         display_streamlit_content(streamlit_section)
     elif st.session_state.active_section == 'github':
         display_github_content(github_section)
+    elif st.session_state.active_section == 'ai_assistant':
+        display_chatbot()
 
 if __name__ == "__main__":
     main()

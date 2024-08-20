@@ -39,12 +39,12 @@ def wait_for_run_complete(client, thread_id, run_id):
         time.sleep(1)
 
 def get_assistant_response(client, user_input):
-    client.beta.threads.messages.create(
+    client.threads.messages.create(
         thread_id=THREAD_ID,
         role='user',
         content=user_input
     )
-    run = client.beta.threads.runs.create(
+    run = client.threads.runs.create(
         thread_id=THREAD_ID,
         assistant_id=ASSISTANT_ID
     )
@@ -63,7 +63,7 @@ def display_chatbot():
             st.markdown(message["content"])
 
     if "openai_api_key" in st.session_state and st.session_state.openai_api_key:
-        client = openai.OpenAI(api_key=st.session_state.openai_api_key)
+        client = OpenAI(api_key=st.session_state.openai_api_key)
         prompt = st.chat_input("Ask me anything about Streamlit or GitHub!")
         if prompt:
             st.session_state.messages.append({"role": "user", "content": prompt})

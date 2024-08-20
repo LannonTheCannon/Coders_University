@@ -33,7 +33,7 @@ THREAD_ID = 'thread_gpesqxGVn0zvniW08rTWhitW'
 
 def wait_for_run_complete(client, thread_id, run_id):
     while True:
-        run = client.beta.threads.runs.retrieve(thread_id=thread_id, run_id=run_id)
+        run = client.threads.runs.retrieve(thread_id=thread_id, run_id=run_id)
         if run.completed_at:
             return run.status
         time.sleep(1)
@@ -49,7 +49,7 @@ def get_assistant_response(client, user_input):
         assistant_id=ASSISTANT_ID
     )
     wait_for_run_complete(client, THREAD_ID, run.id)
-    messages = client.beta.threads.messages.list(thread_id=THREAD_ID)
+    messages = client.threads.messages.list(thread_id=THREAD_ID)
     return messages.data[0].content[0].text.value
 
 def display_chatbot():
@@ -63,7 +63,7 @@ def display_chatbot():
             st.markdown(message["content"])
 
     if "openai_api_key" in st.session_state and st.session_state.openai_api_key:
-        client = OpenAI(api_key=st.session_state.openai_api_key)
+        client = openai.OpenAI(api_key=st.session_state.openai_api_key)
         prompt = st.chat_input("Ask me anything about Streamlit or GitHub!")
         if prompt:
             st.session_state.messages.append({"role": "user", "content": prompt})

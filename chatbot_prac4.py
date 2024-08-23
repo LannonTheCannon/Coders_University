@@ -5,6 +5,9 @@ import time
 # Streamlit page config
 st.set_page_config(page_title="AI Chatbot", page_icon="🤖", layout="wide")
 
+ASSISTANT_ID='asst_etfqF0fCZ4pxXIwuiwy6kqfL'
+THREAD_ID='thread_eODfW5yPUYFxjbd7WBEL09L6'
+
 # Initialize OpenAI client
 api_key = st.secrets["OPENAI_API_KEY"]
 client = openai.OpenAI(api_key=api_key)
@@ -12,34 +15,8 @@ client = openai.OpenAI(api_key=api_key)
 # Main chat interface
 st.title("🤖 AI Chatbot")
 
-# Initialize session state
-if "assistant" not in st.session_state:
-    st.session_state.assistant = None
-if "thread" not in st.session_state:
-    st.session_state.thread = None
 if "messages" not in st.session_state:
     st.session_state.messages = []
-
-def create_assistant():
-    try:
-        assistant = client.beta.assistants.create(
-            name="AI Chatbot",
-            instructions="You are Kaiba from YU GI OH! Your job is to sound just like him",
-            tools=[{"type": "code_interpreter"}],
-            model="gpt-4-turbo-preview"
-        )
-        return assistant
-    except Exception as e:
-        st.error(f"Error creating assistant: {str(e)}")
-        return None
-
-def create_thread():
-    try:
-        thread = client.beta.threads.create()
-        return thread
-    except Exception as e:
-        st.error(f"Error creating thread: {str(e)}")
-        return None
 
 def get_assistant_response(assistant_id, thread_id, user_input):
     try:
@@ -71,13 +48,6 @@ def get_assistant_response(assistant_id, thread_id, user_input):
     except Exception as e:
         st.error(f"Error getting assistant response: {str(e)}")
         return "I'm sorry, but an error occurred while processing your request."
-
-# Create assistant and thread if they don't exist
-if not st.session_state.assistant:
-    st.session_state.assistant = create_assistant()
-if not st.session_state.thread:
-    st.session_state.thread = create_thread()
-
 # Display chat messages
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
@@ -94,8 +64,8 @@ if st.session_state.assistant and st.session_state.thread:
         with st.chat_message("assistant"):
             message_placeholder = st.empty()
             full_response = get_assistant_response(
-                st.session_state.assistant.id, 
-                st.session_state.thread.id, 
+                ASSISTANT_ID,
+                THREAD_ID,  
                 prompt
             )
             message_placeholder.markdown(full_response)

@@ -54,24 +54,22 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # Chat input
-if st.session_state.assistant and st.session_state.thread:
-    prompt = st.chat_input("Ask me anything!")
-    if prompt:
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-        
-        with st.chat_message("assistant"):
-            message_placeholder = st.empty()
-            full_response = get_assistant_response(
-                ASSISTANT_ID,
-                THREAD_ID,  
-                prompt
-            )
-            message_placeholder.markdown(full_response)
-        st.session_state.messages.append({"role": "assistant", "content": full_response})
-else:
-    st.error("Failed to initialize the assistant or thread. Please check your OpenAI API key and try again.")
+
+prompt = st.chat_input("Ask me anything!")
+if prompt:
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+    
+    with st.chat_message("assistant"):
+        message_placeholder = st.empty()
+        full_response = get_assistant_response(
+            ASSISTANT_ID,
+            THREAD_ID,  
+            prompt
+        )
+        message_placeholder.markdown(full_response)
+    st.session_state.messages.append({"role": "assistant", "content": full_response})
 
 # Display assistant and thread IDs for debugging
 st.sidebar.write(f"Assistant ID: {st.session_state.assistant.id if st.session_state.assistant else 'Not created'}")

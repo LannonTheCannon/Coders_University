@@ -59,13 +59,13 @@ def get_assistant_response(assistant_id, thread_id, user_input):
 
         # Wait for the run to complete
         while True:
-            run_status = client.beta.threads.runs.retrieve(thread_id=thread_id, run_id=run.id)
+            run_status = client.beta.threads.runs.retrieve(thread_id=THREAD_ID, run_id=run.id)
             if run_status.status == 'completed':
                 break
             time.sleep(1)
 
         # Retrieve the assistant's messages
-        messages = client.beta.threads.messages.list(thread_id=thread_id)
+        messages = client.beta.threads.messages.list(thread_id=THREAD_ID)
         
         # Return the latest assistant message
         return messages.data[0].content[0].text.value
@@ -73,19 +73,13 @@ def get_assistant_response(assistant_id, thread_id, user_input):
         st.error(f"Error getting assistant response: {str(e)}")
         return "I'm sorry, but an error occurred while processing your request."
 
-# Create assistant and thread if they don't exist
-if not st.session_state.assistant:
-    st.session_state.assistant = create_assistant()
-if not st.session_state.thread:
-    st.session_state.thread = create_thread()
-
 # Display chat messages
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
 # Chat input
-if st.session_state.assistant and st.session_state.thread:
+if ASSISTANT_ID and THREAD_ID:
     prompt = st.chat_input("Ask me anything!")
     if prompt:
         st.session_state.messages.append({"role": "user", "content": prompt})

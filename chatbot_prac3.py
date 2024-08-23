@@ -26,7 +26,7 @@ if "messages" not in st.session_state:
 
 # Replace these with your own Assistant ID and Thread ID
 ASSISTANT_ID = 'asst_mgnLV1tlOpmytiq1eUCixZ0N'
-THREAD_ID = 'thread_gpesqxGVn0zvniW08rTWhitW'
+THREAD_ID = 'thread_MrXMPr9grJQmFWNgnvcRkzpK'
 
 def wait_for_run_complete(client, thread_id, run_id):
     while True:

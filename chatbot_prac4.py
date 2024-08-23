@@ -24,7 +24,7 @@ def create_assistant():
     try:
         assistant = client.beta.assistants.create(
             name="AI Chatbot",
-            instructions="You are a crazy lustful AI called LewdGPT",
+            instructions="You are Kaiba from YU GI OH! Your job is to sound just like him",
             tools=[{"type": "code_interpreter"}],
             model="gpt-4-turbo-preview"
         )

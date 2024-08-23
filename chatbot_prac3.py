@@ -11,7 +11,7 @@ api_key = st.secrets['OPENAI_API_KEY']
 if not api_key:
     st.error('OpenAI API key was not found. Please check your .env file.')
     
-client = openai.OpenAI(api_key=api_key)
+client = openai.OpenAI(api_key=api_key, default_headers={"OpenAI-Beta": "assistants=v2"})
 
 # Streamlit page config
 st.set_page_config(page_title="My AI Chatbot", page_icon="🤖", layout="wide")
@@ -36,28 +36,27 @@ def wait_for_run_complete(client, thread_id, run_id):
         time.sleep(1)
 
 def get_assistant_response(client, user_input):
-    try:
-        # Add the user's message to the thread
-        client.beta.threads.messages.create(
-            thread_id=THREAD_ID,
-            role='user',
-            content=user_input
-        )
-        # Create a run
-        run = client.beta.threads.runs.create(
-            thread_id=THREAD_ID,
-            assistant_id=ASSISTANT_ID
-        )
-        # Wait for the run to complete
-        wait_for_run_complete(client, THREAD_ID, run.id)
-        # Retrieve the assistant's messages
-        messages = client.beta.threads.messages.list(thread_id=THREAD_ID)
-        
-        # Return the latest assistant message
-        return messages.data[0].content[0].text.value
-    except Exception as e:
-        st.error(f"An error occurred: {str(e)}")
-        return "I'm sorry, but I encountered an error while processing your request."
+    # Add the user's message to the thread
+    client.beta.threads.messages.create(
+        thread_id=THREAD_ID,
+        role='user',
+        content=user_input
+    )
+
+    # Create a run
+    run = client.beta.threads.runs.create(
+        thread_id=THREAD_ID,
+        assistant_id=ASSISTANT_ID
+    )
+
+    # Wait for the run to complete
+    wait_for_run_complete(client, THREAD_ID, run.id)
+
+    # Retrieve the assistant's messages
+    messages = client.beta.threads.messages.list(thread_id=THREAD_ID)
+    
+    # Return the latest assistant message
+    return messages.data[0].content[0].text.value
 
 # Display chat messages
 for message in st.session_state.messages:

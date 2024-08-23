@@ -72,5 +72,5 @@ if prompt:
     st.session_state.messages.append({"role": "assistant", "content": full_response})
 
 # Display assistant and thread IDs for debugging
-st.sidebar.write(f"Assistant ID: {st.session_state.assistant.id if st.session_state.assistant else 'Not created'}")
-st.sidebar.write(f"Thread ID: {st.session_state.thread.id if st.session_state.thread else 'Not created'}")
+st.sidebar.write(f"Assistant ID: {ASSISTANT_ID}")
+st.sidebar.write(f"Thread ID: {THREAD_ID}")

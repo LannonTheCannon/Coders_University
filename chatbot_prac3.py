@@ -36,27 +36,31 @@ def wait_for_run_complete(client, thread_id, run_id):
         time.sleep(1)
 
 def get_assistant_response(client, user_input):
-    # Add the user's message to the thread
-    client.beta.threads.messages.create(
-        thread_id=THREAD_ID,
-        role='user',
-        content=user_input
-    )
-
-    # Create a run
-    run = client.beta.threads.runs.create(
-        thread_id=THREAD_ID,
-        assistant_id=ASSISTANT_ID
-    )
-
-    # Wait for the run to complete
-    wait_for_run_complete(client, THREAD_ID, run.id)
-
-    # Retrieve the assistant's messages
-    messages = client.beta.threads.messages.list(thread_id=THREAD_ID)
-    
-    # Return the latest assistant message
-    return messages.data[0].content[0].text.value
+    try:
+        # Add the user's message to the thread
+        client.beta.threads.messages.create(
+            thread_id=THREAD_ID,
+            role='user',
+            content=user_input
+        )
+        # Create a run
+        run = client.beta.threads.runs.create(
+            thread_id=THREAD_ID,
+            assistant_id=ASSISTANT_ID
+        )
+        # Wait for the run to complete
+        wait_for_run_complete(client, THREAD_ID, run.id)
+        # Retrieve the assistant's messages
+        messages = client.beta.threads.messages.list(thread_id=THREAD_ID)
+        
+        # Return the latest assistant message
+        return messages.data[0].content[0].text.value
+    except openai.BadRequestError as e:
+        st.error(f"BadRequestError: {str(e)}")
+        return "I'm sorry, but there was an error processing your request."
+    except Exception as e:
+        st.error(f"An unexpected error occurred: {str(e)}")
+        return "I'm sorry, but an unexpected error occurred."
 
 # Display chat messages
 for message in st.session_state.messages:
@@ -70,11 +74,13 @@ if api_key:
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
-
         with st.chat_message("assistant"):
             message_placeholder = st.empty()
-            full_response = get_assistant_response(client, prompt)
-            message_placeholder.markdown(full_response)
-        st.session_state.messages.append({"role": "assistant", "content": full_response})
+            try:
+                full_response = get_assistant_response(client, prompt)
+                message_placeholder.markdown(full_response)
+                st.session_state.messages.append({"role": "assistant", "content": full_response})
+            except Exception as e:
+                st.error(f"Error getting assistant response: {str(e)}")
 else:
-    st.error('OpenAI API Key was not found. Please check your .env file.')
+    st.error('OpenAI API Key was not found. Please check your Streamlit secrets.')

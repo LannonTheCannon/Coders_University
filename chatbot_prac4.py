@@ -15,47 +15,46 @@ client = openai.OpenAI(api_key=api_key)
 st.title("🤖 AI Chatbot")
 
 # Initialize session state
-if "assistant" not in st.session_state:
-    st.session_state.assistant = None
-if "thread" not in st.session_state:
-    st.session_state.thread = None
-if "messages" not in st.session_state:
-    st.session_state.messages = []
 
-def create_assistant():
-    try:
-        assistant = client.beta.assistants.create(
-            name="AI Chatbot",
-            instructions="You are a helpful AI assistant.",
-            tools=[{"type": "code_interpreter"}],
-            model="gpt-4o-mini"
-        )
-        return assistant
-    except Exception as e:
-        st.error(f"Error creating assistant: {str(e)}")
-        return None
+ASSISTANT_ID='asst_mgnLV1tlOpmytiq1eUCixZ0N'
+THREAD_ID='thread_MrXMPr9grJQmFWNgnvcRkzpK'
 
-def create_thread():
-    try:
-        thread = client.beta.threads.create()
-        return thread
-    except Exception as e:
-        st.error(f"Error creating thread: {str(e)}")
-        return None
+##def create_assistant():
+##    try:
+##        assistant = client.beta.assistants.create(
+##            name="AI Chatbot",
+##            instructions="You are a helpful AI assistant.",
+##            tools=[{"type": "code_interpreter"}],
+##            model="gpt-4o-mini"
+##        )
+##        return assistant
+##    except Exception as e:
+##        st.error(f"Error creating assistant: {str(e)}")
+##        return None
+##
+##def create_thread():
+##    try:
+##        thread = client.beta.threads.create()
+##        return thread
+##    except Exception as e:
+##        st.error(f"Error creating thread: {str(e)}")
+##        return None
+
+
 
 def get_assistant_response(assistant_id, thread_id, user_input):
     try:
         # Add the user's message to the thread
         client.beta.threads.messages.create(
-            thread_id=thread_id,
+            thread_id=THREAD_ID,
             role="user",
             content=user_input
         )
 
         # Create a run
         run = client.beta.threads.runs.create(
-            thread_id=thread_id,
-            assistant_id=assistant_id
+            thread_id=THREAD_ID,
+            assistant_id=ASSISTANT_ID
         )
 
         # Wait for the run to complete

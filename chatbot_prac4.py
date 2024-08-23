@@ -9,8 +9,15 @@ ASSISTANT_ID='asst_etfqF0fCZ4pxXIwuiwy6kqfL'
 THREAD_ID='thread_eODfW5yPUYFxjbd7WBEL09L6'
 
 # Initialize OpenAI client
-api_key = st.secrets["OPENAI_API_KEY"]
+
+api_key = st.secrets.get("OPENAI_API_KEY") or os.environ.get("OPENAI_API_KEY")
+#api_key = st.secrets["OPENAI_API_KEY"]
+if not api_key:
+    st.error('OpenAI API Key was not found. Please set it in Streamlit secrets or as an ')
+    st.stop()
+
 client = openai.OpenAI(api_key=api_key)
+    
 
 # Main chat interface
 st.title("🤖 AI Chatbot")

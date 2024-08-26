@@ -1,6 +1,7 @@
 import streamlit as st
 import openai
 import time
+import os
 
 # Streamlit page config
 st.set_page_config(page_title="AI Chatbot", page_icon="🤖", layout="wide")

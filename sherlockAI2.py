@@ -24,7 +24,7 @@ SCOPES = ['https://www.googleapis.com/auth/calendar']
 
 # Initialize OpenAI client
 client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-notion = Client(auth=st.secrets['NOTION_API_KEY'])
+#notion = Client(auth=st.secrets['NOTION_API_KEY'])
 
 # Create function to interact with notion database
 def get_notion_data(database_id):

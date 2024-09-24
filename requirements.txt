@@ -3,3 +3,4 @@ openai==1.11.0
 streamlit-ace==0.1.1
 streamlit-vis-timeline==0.3.0
 setuptools<=75.1.0
+streamlit-timeline==0.0.2 

@@ -1,0 +1,35 @@
+{
+    "title": {
+        "media": {
+            "url": "https://picsum.photos/id/237/200/300",
+            "caption": "<h1>Placeholder</h1> ",
+            "credit": "https://picsum.photos/"
+        },
+        "text": {
+            "headline": "Timeline",
+            "text": "Timeline </p>"
+        }
+    },
+    "events": [
+        {
+            "media": {
+                "url": "https://picsum.photos/200/300",
+                "caption": "Photo insert",
+                "credit": "https://picsum.photos/"
+            },
+            "start_date": {
+                "year":2023,
+                "month":12,
+                "day":27, 
+                "hour": 22,
+                "minute": 58,
+                "second": 4,
+                "microsecond":  880610
+            },
+            "text": {
+                "headline": "photo",
+                "text": " placeholder  </p>"
+            }
+        }
+    ]
+}

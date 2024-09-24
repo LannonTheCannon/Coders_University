@@ -1,13 +1,13 @@
 
 import streamlit as st
-from streamlit_timeline import timeline
+import streamlit_timeline
 
-# use full page width
-st.set_page_config(page_title="Timeline Example", layout="wide")
+def timey_func(): 
+    # load data
+    with open('example.json', "r") as f:
+        data = f.read()
 
-# load data
-with open('example.json', "r") as f:
-    data = f.read()
+    # render timeline
+    streamlit_timeline.timeline(data, height=800)
 
-# render timeline
-timeline(data, height=800)
+    

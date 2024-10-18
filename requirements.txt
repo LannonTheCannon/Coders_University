@@ -3,4 +3,4 @@ openai==1.11.0
 streamlit-ace==0.1.1
 setuptools<=75.1.0
 streamlit-timeline
-google_auth_oauthlib
+google-api-python-client

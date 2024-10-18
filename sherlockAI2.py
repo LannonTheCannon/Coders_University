@@ -285,7 +285,7 @@ if st.session_state.service is None:
     if st.sidebar.button('Connect to Google Calendar'):
         st.session_state.service = get_calendar_service()
         st.sidebar.success('Successfully connected to Google Calendar!')
-        st.rerun()
+        st.experimental_rerun()
 
 # Display chat messages
 for message in st.session_state.messages:

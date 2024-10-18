@@ -11,7 +11,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import pytz
 from dateutil import parser
-from notion_client import Client
+# from notion_client import Client
 
 
 # Streamlit page config
@@ -19,7 +19,7 @@ st.set_page_config(page_title="Sherlock Holmes Chatbot", page_icon="🕵️", la
 
 # OpenAI and Google Calendar setup
 ASSISTANT_ID = 'asst_OUgnR5TbpMHivgAvdaG28t3I'
-THREAD_ID = 'thread_GUUKb8PcbEoMtO2glDRfxNR3'
+THREAD_ID = 'thread_a9hmNenXCeOMVGl9K0Cuk4lr'
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 
 # Initialize OpenAI client
@@ -27,13 +27,13 @@ client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 #notion = Client(auth=st.secrets['NOTION_API_KEY'])
 
 # Create function to interact with notion database
-def get_notion_data(database_id):
-    try:
-        response = notion.databases.query(database_id=database_id)
-        return response['results']
-    except Exception as e:
-        print(f'An error occured while fetching Notion data: {e}')
-        return None 
+# def get_notion_data(database_id):
+#     try:
+#         response = notion.databases.query(database_id=database_id)
+#         return response['results']
+#     except Exception as e:
+#         print(f'An error occured while fetching Notion data: {e}')
+#         return None
 
 # Get current event
 def get_current_date_info():

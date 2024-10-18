@@ -55,7 +55,7 @@ def get_calendar_service():
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = Flow.from_client_secrets_file('client_secret.json', SCOPES)
+            flow = Flow.from_client_secrets_file('.secrets/client_secret.json', SCOPES)
             creds = flow.run_local_server(port=0)
 
         with open('token.json', 'w') as token:

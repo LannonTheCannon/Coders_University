@@ -19,7 +19,7 @@ def get_calendar_service():
             creds.refresh(Request())
         else:
             flow = Flow.from_client_secrets_file(
-                'client_secret.json', SCOPES)
+                '.streamlit/client_secret.json', SCOPES)
             creds = flow.run_local_server(port=0)
         
         with open('token.json', 'w') as token:

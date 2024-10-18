@@ -23,7 +23,7 @@ THREAD_ID = 'thread_a9hmNenXCeOMVGl9K0Cuk4lr'
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 
 # Initialize OpenAI client
-client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"], api_version="v2")
+client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"], default_headers={"OpenAI-Beta": "assistants=v2"})
 #notion = Client(auth=st.secrets['NOTION_API_KEY'])
 
 # Create function to interact with notion database

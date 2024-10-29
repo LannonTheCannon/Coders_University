@@ -4,7 +4,7 @@ import streamlit_timeline
 
 def timey_func(): 
     # load data
-    with open('example.json', "r") as f:
+    with open('../../example.json', "r") as f:
         data = f.read()
 
     # render timeline

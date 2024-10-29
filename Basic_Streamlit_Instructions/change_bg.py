@@ -19,4 +19,4 @@ def add_bg_from_local(image_file, scale=0.5):
     unsafe_allow_html=True
     )
 
-add_bg_from_local('./images/blanky.png')
+add_bg_from_local('../images/blanky.png')

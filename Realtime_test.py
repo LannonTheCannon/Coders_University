@@ -1,207 +1,191 @@
-import openai
 import streamlit as st
+import sounddevice as sd
+import numpy as np
+import openai
+import websockets
 import json
-import time
-
-# Streamlit page config
-st.set_page_config(page_title="Weather Assistant", page_icon="🌤️", layout="wide")
+import base64
+import asyncio
+from scipy import signal
+from pydub import AudioSegment
+import io
 
 # Initialize OpenAI client
-client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"], default_headers={"OpenAI-Beta": "assistants=v2"})
+api_key = st.secrets['OPENAI_API_KEY']
 
-# Constants
-ASSISTANT_ID = None  # You'll get this after creating the assistant
-THREAD_ID = None  # You'll get this after creating the thread
+# Audio recording parameters
+SAMPLE_RATE = 16000
+CHANNELS = 1
+DTYPE = np.int16
 
-def get_current_temperature(location: str, unit: str) -> str:
-    """Mock temperature function"""
-    return f"75°{unit[0]}"
+class AudioRecorder:
+    def __init__(self):
+        self.recording = False
+        self.audio_data = []
 
-def get_rain_probability(location: str) -> str:
-    """Mock rain probability function"""
-    return "30%"
+    def callback(self, indata, frames, time, status):
+        if status:
+            print("Status:", status)
+        if self.recording:
+            self.audio_data.append(indata.copy())
 
-
-def get_assistant_response(assistant_id, thread_id, user_input):
-    try:
-        # Add the user's message to the thread
-        client.beta.threads.messages.create(
-            thread_id=thread_id,
-            role="user",
-            content=user_input
-        )
-
-        # Create a run with the tools
-        run = client.beta.threads.runs.create(
-            thread_id=thread_id,
-            assistant_id=assistant_id,
-            tools=[{
-                "type": "function",
-                "function": {
-                    "name": "get_current_temperature",
-                    "description": "Get the current temperature for a specific location",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "location": {
-                                "type": "string",
-                                "description": "The city and state, e.g., San Francisco, CA"
-                            },
-                            "unit": {
-                                "type": "string",
-                                "enum": ["Celsius", "Fahrenheit"],
-                                "description": "The temperature unit to use"
-                            }
-                        },
-                        "required": ["location", "unit"]
-                    }
-                }
-            },
-                {
-                    "type": "function",
-                    "function": {
-                        "name": "get_rain_probability",
-                        "description": "Get the probability of rain for a specific location",
-                        "parameters": {
-                            "type": "object",
-                            "properties": {
-                                "location": {
-                                    "type": "string",
-                                    "description": "The city and state, e.g., San Francisco, CA"
-                                }
-                            },
-                            "required": ["location"]
-                        }
-                    }
-                }]
-        )
-
-        # Poll for the run to complete
-        while True:
-            run_status = client.beta.threads.runs.retrieve(
-                thread_id=thread_id,
-                run_id=run.id
+    def start_recording(self):
+        self.recording = True
+        self.audio_data = []
+        try:
+            self.stream = sd.InputStream(
+                samplerate=SAMPLE_RATE,
+                channels=CHANNELS,
+                dtype=DTYPE,
+                callback=self.callback
             )
+            self.stream.start()
+            print("Recording started successfully")
+        except Exception as e:
+            print(f"Error starting recording: {str(e)}")
 
-            if run_status.status == 'completed':
-                break
-            elif run_status.status == 'requires_action':
-                tool_outputs = []
-                for tool_call in run_status.required_action.submit_tool_outputs.tool_calls:
-                    if tool_call.function.name == "get_current_temperature":
-                        arguments = json.loads(tool_call.function.arguments)
-                        temperature = get_current_temperature(
-                            location=arguments['location'],
-                            unit=arguments['unit']
-                        )
-                        tool_outputs.append({
-                            "tool_call_id": tool_call.id,
-                            "output": json.dumps({"temperature": temperature})
-                        })
-                    elif tool_call.function.name == "get_rain_probability":
-                        arguments = json.loads(tool_call.function.arguments)
-                        probability = get_rain_probability(
-                            location=arguments['location']
-                        )
-                        tool_outputs.append({
-                            "tool_call_id": tool_call.id,
-                            "output": json.dumps({"probability": probability})
-                        })
+    def stop_recording(self):
+        self.recording = False
+        if hasattr(self, 'stream'):
+            self.stream.stop()
+            self.stream.close()
+        if len(self.audio_data) > 0:
+            try:
+                audio = np.concatenate(self.audio_data, axis=0)
+                return audio
+            except Exception as e:
+                print(f"Error processing audio: {str(e)}")
+        return None
 
-                client.beta.threads.runs.submit_tool_outputs(
-                    thread_id=thread_id,
-                    run_id=run.id,
-                    tool_outputs=tool_outputs
-                )
-            time.sleep(1)
+def process_audio(audio_data):
+    """Convert audio data to 24kHz mono PCM16 little-endian"""
+    try:
+        audio_data = audio_data.flatten()
+        audio_data = audio_data.astype(np.float32) / 32768.0
 
-        # Get the assistant's response
-        messages = client.beta.threads.messages.list(thread_id=thread_id)
-        return messages.data[0].content[0].text.value
+        if SAMPLE_RATE != 24000:
+            samples = len(audio_data)
+            new_samples = int(samples * 24000 / SAMPLE_RATE)
+            audio_data = signal.resample(audio_data, new_samples)
+
+        audio_data = (audio_data * 32767).astype(np.int16)
+
+        if audio_data.dtype.byteorder == '>':
+            audio_data = audio_data.byteswap()
+
+        raw_pcm = audio_data.tobytes()
+        return base64.b64encode(raw_pcm).decode()
 
     except Exception as e:
-        st.error(f"Error getting assistant response: {str(e)}")
-        return "I apologize, but I encountered an error. Please try again."
+        print(f"Error processing audio: {e}")
+        return None
 
 
-# Main Streamlit App
-st.title("🌤️ Weather Assistant")
-st.markdown("*Ask me about the weather in any location!*")
+async def send_to_openai(audio_base64):
+    websocket_url = "wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-10-01"
+    headers = {
+        'Authorization': f"Bearer {api_key}",
+        'Content-Type': 'application/json',
+        'OpenAI-Beta': 'realtime=v1'
+    }
 
-# Initialize session state for messages
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+    audio_chunks = []
+    try:
+        async with websockets.connect(websocket_url, extra_headers=headers) as websocket:
+            print("WebSocket connected successfully")
 
-# Initialize the assistant and thread if not already done
-if "assistant_id" not in st.session_state:
-    # Create the assistant
-    assistant = client.beta.assistants.create(
-        instructions="You are a helpful weather assistant. Use the provided functions to get weather information and explain it in a friendly way.",
-        model="gpt-4",
-        tools=[{
-            "type": "function",
-            "function": {
-                "name": "get_current_temperature",
-                "description": "Get the current temperature for a specific location",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "location": {
-                            "type": "string",
-                            "description": "The city and state, e.g., San Francisco, CA"
-                        },
-                        "unit": {
-                            "type": "string",
-                            "enum": ["Celsius", "Fahrenheit"],
-                            "description": "The temperature unit to use"
-                        }
-                    },
-                    "required": ["location", "unit"]
-                }
-            }
-        },
-            {
-                "type": "function",
-                "function": {
-                    "name": "get_rain_probability",
-                    "description": "Get the probability of rain for a specific location",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "location": {
-                                "type": "string",
-                                "description": "The city and state, e.g., San Francisco, CA"
-                            }
-                        },
-                        "required": ["location"]
+            # Session setup
+            session_update = {
+                "type": "session.update",
+                "session": {
+                    "modalities": ["text", "audio"],
+                    "input_audio_transcription": {"model": "whisper-1"},
+                    "turn_detection": {
+                        "type": "server_vad",
+                        "threshold": 0.5,
+                        "prefix_padding_ms": 600,
+                        "silence_duration_ms": 1000
                     }
                 }
-            }]
-    )
-    st.session_state.assistant_id = assistant.id
+            }
+            await websocket.send(json.dumps(session_update))
+            await websocket.recv()  # session update response
 
-if "thread_id" not in st.session_state:
-    # Create the thread
-    thread = client.beta.threads.create()
-    st.session_state.thread_id = thread.id
+            # Append audio data
+            await websocket.send(json.dumps({"type": "input_audio_buffer.append", "audio": audio_base64}))
+            await websocket.send(json.dumps({"type": "input_audio_buffer.commit"}))
+            await websocket.send(json.dumps({"type": "response.create"}))
 
-# Display chat messages
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+            # Process responses
+            while True:
+                response = await websocket.recv()
+                response_data = json.loads(response)
 
-# Chat input
-if prompt := st.chat_input("Ask about the weather..."):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+                if response_data.get('type') == 'response.audio.delta':
+                    audio_chunk = response_data.get('delta', '')
+                    if audio_chunk:
+                        audio_chunks.append(base64.b64decode(audio_chunk))
 
-    with st.chat_message("assistant"):
-        message_placeholder = st.empty()
-        full_response = get_assistant_response(
-            st.session_state.assistant_id,
-            st.session_state.thread_id,
-            prompt
-        )
-        message_placeholder.markdown(full_response)
-    st.session_state.messages.append({"role": "assistant", "content": full_response})
+                elif response_data.get('type') == 'response.text.delta':
+                    delta = response_data.get('delta', '')
+                    if delta:
+                        st.write(delta)
+
+                elif response_data.get('type') == 'response.done':
+                    print("Response complete")
+                    break
+
+    except Exception as e:
+        print(f"Error: {e}")
+
+    # Combine audio for playback
+    if audio_chunks:
+        combined_audio = b''.join(audio_chunks)
+        audio_segment = AudioSegment.from_raw(io.BytesIO(combined_audio), sample_width=2, frame_rate=24000, channels=1)
+
+        audio_buffer = io.BytesIO()
+        audio_segment.export(audio_buffer, format="wav")
+        audio_bytes = audio_buffer.getvalue()
+
+        # Render audio player
+        audio_html = f"""
+        <audio autoplay controls>
+            <source src="data:audio/wav;base64,{base64.b64encode(audio_bytes).decode()}" type="audio/wav">
+            Your browser does not support the audio element.
+        </audio>
+        """
+        st.markdown(audio_html, unsafe_allow_html=True)
+
+
+def main():
+    st.title("OpenAI Realtime Voice Chat")
+
+    from pydub import AudioSegment
+    AudioSegment.converter = "C:/ffmpeg/bin/ffmpeg.exe"  # Adjust path if necessary
+    print(f"ffmpeg path: {AudioSegment.converter}")
+
+    if 'recorder' not in st.session_state:
+        st.session_state.recorder = AudioRecorder()
+    if 'recording' not in st.session_state:
+        st.session_state.recording = False
+
+    if st.button("Hold to Record"):
+        if not st.session_state.recording:
+            st.session_state.recording = True
+            st.session_state.recorder.start_recording()
+            st.write("🎙️ Recording... Hold down to speak!")
+        else:
+            st.session_state.recording = False
+            audio_data = st.session_state.recorder.stop_recording()
+
+            if audio_data is not None:
+                with st.spinner("Processing audio..."):
+                    audio_base64 = process_audio(audio_data)
+
+                    if audio_base64:
+                        asyncio.run(send_to_openai(audio_base64))
+                    else:
+                        st.error("Failed to process audio")
+
+if __name__ == "__main__":
+    main()

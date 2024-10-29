@@ -1,85 +1,207 @@
-import streamlit as st
 import openai
-import io
+import streamlit as st
 import json
-from pydub import AudioSegment
-import base64
-import asyncio
-import websockets
+import time
 
-# Set your OpenAI API key
-openai.api_key = st.secrets["OPENAI_API_KEY"]
+# Streamlit page config
+st.set_page_config(page_title="Weather Assistant", page_icon="🌤️", layout="wide")
 
-def audio_to_item_create_event(audio_bytes: bytes) -> str:
-    # Load the audio file from the byte stream
-    audio = AudioSegment.from_file(io.BytesIO(audio_bytes))
+# Initialize OpenAI client
+client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"], default_headers={"OpenAI-Beta": "assistants=v2"})
 
-    # Resample to 24kHz mono pcm16
-    pcm_audio = audio.set_frame_rate(24000).set_channels(1).set_sample_width(2).raw_data
+# Constants
+ASSISTANT_ID = None  # You'll get this after creating the assistant
+THREAD_ID = None  # You'll get this after creating the thread
 
-    # Encode to base64 string
-    pcm_base64 = base64.b64encode(pcm_audio).decode()
+def get_current_temperature(location: str, unit: str) -> str:
+    """Mock temperature function"""
+    return f"75°{unit[0]}"
 
-    event = {
-        "type": "conversation.item.create",
-        "item": {
-            "type": "message",
-            "role": "user",
-            "content": [{
-                "type": "input_audio",
-                "audio": pcm_base64
-            }]
-        }
-    }
-    return json.dumps(event)
+def get_rain_probability(location: str) -> str:
+    """Mock rain probability function"""
+    return "30%"
 
-async def connect_to_realtime_api(event_json):
-    # Replace with the actual Realtime API WebSocket endpoint
-    websocket_url = "wss://api.openai.com/v1/realtime/conversations"
 
-    headers = {
-        'Authorization': f"Bearer {openai.api_key}",
-        'Content-Type': 'application/json'
-    }
+def get_assistant_response(assistant_id, thread_id, user_input):
+    try:
+        # Add the user's message to the thread
+        client.beta.threads.messages.create(
+            thread_id=thread_id,
+            role="user",
+            content=user_input
+        )
 
-    async with websockets.connect(websocket_url, extra_headers=headers) as websocket:
-        # Send the event to the Realtime API
-        await websocket.send(event_json)
+        # Create a run with the tools
+        run = client.beta.threads.runs.create(
+            thread_id=thread_id,
+            assistant_id=assistant_id,
+            tools=[{
+                "type": "function",
+                "function": {
+                    "name": "get_current_temperature",
+                    "description": "Get the current temperature for a specific location",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "location": {
+                                "type": "string",
+                                "description": "The city and state, e.g., San Francisco, CA"
+                            },
+                            "unit": {
+                                "type": "string",
+                                "enum": ["Celsius", "Fahrenheit"],
+                                "description": "The temperature unit to use"
+                            }
+                        },
+                        "required": ["location", "unit"]
+                    }
+                }
+            },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "get_rain_probability",
+                        "description": "Get the probability of rain for a specific location",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "location": {
+                                    "type": "string",
+                                    "description": "The city and state, e.g., San Francisco, CA"
+                                }
+                            },
+                            "required": ["location"]
+                        }
+                    }
+                }]
+        )
 
-        # Receive and display responses
+        # Poll for the run to complete
         while True:
-            response = await websocket.recv()
-            response_data = json.loads(response)
-            yield response_data
+            run_status = client.beta.threads.runs.retrieve(
+                thread_id=thread_id,
+                run_id=run.id
+            )
 
-def main():
-    st.title("OpenAI Realtime API with Streamlit")
+            if run_status.status == 'completed':
+                break
+            elif run_status.status == 'requires_action':
+                tool_outputs = []
+                for tool_call in run_status.required_action.submit_tool_outputs.tool_calls:
+                    if tool_call.function.name == "get_current_temperature":
+                        arguments = json.loads(tool_call.function.arguments)
+                        temperature = get_current_temperature(
+                            location=arguments['location'],
+                            unit=arguments['unit']
+                        )
+                        tool_outputs.append({
+                            "tool_call_id": tool_call.id,
+                            "output": json.dumps({"temperature": temperature})
+                        })
+                    elif tool_call.function.name == "get_rain_probability":
+                        arguments = json.loads(tool_call.function.arguments)
+                        probability = get_rain_probability(
+                            location=arguments['location']
+                        )
+                        tool_outputs.append({
+                            "tool_call_id": tool_call.id,
+                            "output": json.dumps({"probability": probability})
+                        })
 
-    # Allow the user to upload an audio file
-    uploaded_file = st.file_uploader("Upload an audio file", type=["wav", "mp3", "m4a", "ogg"])
+                client.beta.threads.runs.submit_tool_outputs(
+                    thread_id=thread_id,
+                    run_id=run.id,
+                    tool_outputs=tool_outputs
+                )
+            time.sleep(1)
 
-    if uploaded_file is not None:
-        st.audio(uploaded_file, format='audio/wav')
-        audio_bytes = uploaded_file.read()
+        # Get the assistant's response
+        messages = client.beta.threads.messages.list(thread_id=thread_id)
+        return messages.data[0].content[0].text.value
 
-        # Generate the event JSON
-        event_json = audio_to_item_create_event(audio_bytes)
+    except Exception as e:
+        st.error(f"Error getting assistant response: {str(e)}")
+        return "I apologize, but I encountered an error. Please try again."
 
-        st.write("Event JSON:")
-        st.json(json.loads(event_json))
 
-        # Display a placeholder for the streaming responses
-        response_placeholder = st.empty()
+# Main Streamlit App
+st.title("🌤️ Weather Assistant")
+st.markdown("*Ask me about the weather in any location!*")
 
-        # Define an asynchronous function to handle the WebSocket connection
-        async def run_realtime_api():
-            responses = connect_to_realtime_api(event_json)
-            async for response_data in responses:
-                # Update the placeholder with new responses
-                response_placeholder.write(response_data)
+# Initialize session state for messages
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-        # Run the asynchronous function
-        asyncio.run(run_realtime_api())
+# Initialize the assistant and thread if not already done
+if "assistant_id" not in st.session_state:
+    # Create the assistant
+    assistant = client.beta.assistants.create(
+        instructions="You are a helpful weather assistant. Use the provided functions to get weather information and explain it in a friendly way.",
+        model="gpt-4",
+        tools=[{
+            "type": "function",
+            "function": {
+                "name": "get_current_temperature",
+                "description": "Get the current temperature for a specific location",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "location": {
+                            "type": "string",
+                            "description": "The city and state, e.g., San Francisco, CA"
+                        },
+                        "unit": {
+                            "type": "string",
+                            "enum": ["Celsius", "Fahrenheit"],
+                            "description": "The temperature unit to use"
+                        }
+                    },
+                    "required": ["location", "unit"]
+                }
+            }
+        },
+            {
+                "type": "function",
+                "function": {
+                    "name": "get_rain_probability",
+                    "description": "Get the probability of rain for a specific location",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "location": {
+                                "type": "string",
+                                "description": "The city and state, e.g., San Francisco, CA"
+                            }
+                        },
+                        "required": ["location"]
+                    }
+                }
+            }]
+    )
+    st.session_state.assistant_id = assistant.id
 
-if __name__ == "__main__":
-    main()
+if "thread_id" not in st.session_state:
+    # Create the thread
+    thread = client.beta.threads.create()
+    st.session_state.thread_id = thread.id
+
+# Display chat messages
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+# Chat input
+if prompt := st.chat_input("Ask about the weather..."):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    with st.chat_message("assistant"):
+        message_placeholder = st.empty()
+        full_response = get_assistant_response(
+            st.session_state.assistant_id,
+            st.session_state.thread_id,
+            prompt
+        )
+        message_placeholder.markdown(full_response)
+    st.session_state.messages.append({"role": "assistant", "content": full_response})

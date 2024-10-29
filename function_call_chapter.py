@@ -363,3 +363,5 @@ if __name__ == '__main__':
             st.session_state.messages = []
 
         # Rest of your main() function implementation...
+        st.markdown('''<iframe src='https://callfunc.streamlit.app/?embed=True' width='800' height='600'></iframe>''',
+                    unsafe_allow_html=True)

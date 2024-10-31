@@ -163,3 +163,4 @@ cython_debug/
 
 # Streamlit secrets
 .streamlit/secrets.toml
+OpenAI_X_Streamlit_Stand_Alone/Function_Calling/.streamlit/secrets.toml

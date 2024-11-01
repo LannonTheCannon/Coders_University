@@ -1,22 +1,19 @@
 import streamlit as st
-import pandas as pd
-import altair as alt
-import time
 
 # Streamlit Fundamentals Library 
-from src.streamlit_fundamentals.landing_1 import landing_page
-from src.streamlit_fundamentals.setup_2 import setup_page
-from src.streamlit_fundamentals.basic_elements_3 import basic_elements_page
-from src.streamlit_fundamentals.interactive_app_4 import interactive_app_page
-from src.streamlit_fundamentals.running_app_5 import running_app_page
-from src.streamlit_fundamentals.sess_state_6 import sess_state_page
-from src.streamlit_fundamentals.hands_on_act_7 import hands_on_activity_page
-from src.streamlit_fundamentals.wrap_up_8 import wrap_up_page
-from src.streamlit_fundamentals.css_wrap_9 import css_wrapping_page
-from src.streamlit_fundamentals.disp_quiz_10 import display_quiz_page
+from Basic_Streamlit_Instructions.src.streamlit_fundamentals.landing_1 import landing_page
+from Basic_Streamlit_Instructions.src.streamlit_fundamentals.setup_2 import setup_page
+from Basic_Streamlit_Instructions.src.streamlit_fundamentals.basic_elements_3 import basic_elements_page
+from Basic_Streamlit_Instructions.src.streamlit_fundamentals.interactive_app_4 import interactive_app_page
+from Basic_Streamlit_Instructions.src.streamlit_fundamentals.running_app_5 import running_app_page
+from Basic_Streamlit_Instructions.src.streamlit_fundamentals.sess_state_6 import sess_state_page
+from Basic_Streamlit_Instructions.src.streamlit_fundamentals.hands_on_act_7 import hands_on_activity_page
+from Basic_Streamlit_Instructions.src.streamlit_fundamentals.wrap_up_8 import wrap_up_page
+from Basic_Streamlit_Instructions.src.streamlit_fundamentals.css_wrap_9 import css_wrapping_page
+from Basic_Streamlit_Instructions.src.streamlit_fundamentals.disp_quiz_10 import display_quiz_page
 
 # Github and Github Desktop Tutorials
-from src.github_topics.github_intro_1 import intro_to_git
+from Basic_Streamlit_Instructions.src.github_topics.github_intro_1 import intro_to_git
 
 # Set page config
 st.set_page_config(

@@ -257,12 +257,12 @@ def render_lesson_content(subsection):
             if current_index > 0:
                 if st.button("← Previous Section"):
                     st.session_state.current_subsection = current_sections[current_index - 1]
-                    st.experimental_rerun()
+                    st.rerun()
         with col2:
             if current_index < len(current_sections) - 1:
                 if st.button("Next Section →"):
                     st.session_state.current_subsection = current_sections[current_index + 1]
-                    st.experimental_rerun()
+                    st.rerun()
 
 
 def main():

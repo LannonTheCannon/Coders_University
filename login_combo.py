@@ -5,7 +5,6 @@ from datetime import datetime
 import hashlib
 import json
 
-
 def init_db():
     """Initialize SQLite database with users table"""
     conn = sqlite3.connect('users.db')
@@ -30,14 +29,11 @@ def init_db():
     conn.commit()
     conn.close()
 
-
 def hash_password(password: str) -> str:
     return hashlib.sha256(password.encode()).hexdigest()
 
-
 def verify_password(password: str, hash: str) -> bool:
     return hmac.compare_digest(hash_password(password), hash)
-
 
 def add_user(username: str, password: str):
     """Add new user and initialize their student data"""

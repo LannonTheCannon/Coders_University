@@ -3,6 +3,8 @@
 import streamlit as st
 from login_combo import init_db, login_page, update_student_data, get_student_data
 import pandas as pd
+import random
+from datetime import datetime
 
 # Initialize session states
 if 'current_view' not in st.session_state:
@@ -81,33 +83,150 @@ def render_navigation():
         if st.button('Resources', use_container_width=True):
             st.session_state.current_page = 'resources'
 
+
 def render_dashboard():
-    """Render the dashboard page"""
-    st.header("Student Dashboard")
-
-    # Safety check
-    if st.session_state.username not in st.session_state.student_data:
-        st.session_state.student_data = {
-                st.session_state.username: get_student_data(st.session_state.username)
-        }
-
+    """Render a youth-focused dashboard"""
     student = st.session_state.student_data[st.session_state.username]
 
+    # Welcome Section with Time-based greeting
+    current_hour = datetime.now().hour
+    greeting = "Good morning! 🌅" if 5 <= current_hour < 12 else \
+        "Good afternoon! ☀️" if 12 <= current_hour < 17 else \
+            "Good evening! 🌙"
+
+    st.header(f"{greeting} {student['name']}")
+
+    # Top Stats in Modern Cards
     col1, col2, col3 = st.columns(3)
     with col1:
-        overall_progress = sum(student['progress'].values()) / len(student['progress'].values())
-        st.metric("Overall Progress", f"{overall_progress:.1f}%")
+        st.markdown("""
+        <div style='padding: 20px; background-color: #f0f2f6; border-radius: 10px; text-align: center;'>
+            <h3>Coding Streak 🔥</h3>
+            <h2>5 Days</h2>
+        </div>
+        """, unsafe_allow_html=True)
+
     with col2:
-        st.metric("Current Module", student['current_module'])
+        # Calculate level based on total progress
+        total_progress = sum(student['progress'].values())
+        level = int(total_progress / 100) + 1
+        st.markdown(f"""
+        <div style='padding: 20px; background-color: #f0f2f6; border-radius: 10px; text-align: center;'>
+            <h3>Coder Level 🚀</h3>
+            <h2>Level {level}</h2>
+        </div>
+        """, unsafe_allow_html=True)
+
     with col3:
-        latest_score = student['test_scores'][-1] if student['test_scores'] else "No tests yet"
-        st.metric("Latest Test Score", latest_score)
+        # Calculate achievements percentage
+        total_achievements = len(student['achievements'])
+        st.markdown(f"""
+        <div style='padding: 20px; background-color: #f0f2f6; border-radius: 10px; text-align: center;'>
+            <h3>Achievements 🏆</h3>
+            <h2>{total_achievements}</h2>
+        </div>
+        """, unsafe_allow_html=True)
 
-    st.subheader("Skills Progress")
-    for skill, progress in student['progress'].items():
-        st.progress(progress / 100)
-        st.caption(f"{skill.replace('_', ' ').title()}: {progress}%")
+    st.divider()
 
+    # Current Mission & Progress
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        st.subheader("🎯 Current Mission")
+        current_module = student['current_module']
+        progress_value = student['progress'].get(
+            current_module.lower().replace(' ', '_'), 0
+        )
+
+        st.markdown(f"""
+        ### {current_module}
+        Progress: {progress_value}%
+        """)
+        st.progress(progress_value / 100)
+
+        # Next milestone
+        next_milestone = (progress_value // 10 + 1) * 10
+        if progress_value < 100:
+            st.caption(f"🎯 Next Milestone: {next_milestone}%")
+
+    with col2:
+        st.subheader("⭐ Quick Stats")
+        st.markdown(f"""
+        - 🏃‍♂️ Active Days: 12
+        - ✅ Tasks Completed: {int(total_progress / 10)}
+        - 📝 Lines of Code: {int(total_progress * 20)}
+        """)
+
+    # Recent Achievements
+    st.subheader("🏆 Recent Achievements")
+    if student['achievements']:
+        achievements_col1, achievements_col2, achievements_col3 = st.columns(3)
+        for idx, achievement in enumerate(student['achievements'][-3:]):
+            with [achievements_col1, achievements_col2, achievements_col3][idx]:
+                st.markdown(f"""
+                <div style='padding: 15px; background-color: #e6f3ff; border-radius: 10px; text-align: center;'>
+                    <h4>🏆 {achievement}</h4>
+                </div>
+                """, unsafe_allow_html=True)
+    else:
+        st.info("Complete lessons to earn your first achievement! 🎯")
+
+    # Skill Progress Bars with Icons
+    st.subheader("💪 Your Skills")
+    skills_col1, skills_col2 = st.columns(2)
+
+    with skills_col1:
+        st.markdown("#### Core Skills")
+        for skill, progress in student['progress'].items():
+            if skill in ['python_basics', 'functions']:
+                icon = "🐍" if skill == "python_basics" else "⚡"
+                st.markdown(f"**{icon} {skill.replace('_', ' ').title()}**")
+                st.progress(progress / 100)
+                st.caption(f"{progress}% Mastered")
+
+    with skills_col2:
+        st.markdown("#### Advanced Skills")
+        for skill, progress in student['progress'].items():
+            if skill in ['web_dev', 'ai_integration']:
+                icon = "🌐" if skill == "web_dev" else "🤖"
+                st.markdown(f"**{icon} {skill.replace('_', ' ').title()}**")
+                st.progress(progress / 100)
+                st.caption(f"{progress}% Mastered")
+
+    # Quick Actions
+    st.subheader("⚡ Quick Actions")
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        if st.button("📚 Resume Learning", use_container_width=True):
+            st.session_state.current_view = 'lessons'
+            st.rerun()
+
+    with col2:
+        if st.button("🎯 Set Goals", use_container_width=True):
+            st.info("Goals feature coming soon!")
+
+    with col3:
+        if st.button("👥 Join Community", use_container_width=True):
+            st.info("Community feature coming soon!")
+
+    with col4:
+        if st.button("🎮 Practice Games", use_container_width=True):
+            st.info("Coding games coming soon!")
+
+    # Weekly Activity Calendar
+    st.subheader("📅 Weekly Activity")
+    cols = st.columns(7)
+    days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    for idx, (col, day) in enumerate(zip(cols, days)):
+        with col:
+            activity_level = random.choice(['🟢', '🟡', '⚪'])  # Mock activity data
+            st.markdown(f"""
+            <div style='text-align: center;'>
+                <p>{day}</p>
+                <h3>{activity_level}</h3>
+            </div>
+            """, unsafe_allow_html=True)
 
 def render_progress():
     """Render the progress tracking page"""
@@ -208,7 +327,7 @@ def render_lesson_content(subsection):
             # Refresh student data
             st.session_state.student_data[st.session_state.username] = get_student_data(st.session_state.username)
             st.success("Progress updated!")
-            st.experimental_rerun()
+            st.rerun()
 
     elif subsection == "1.2 Variables and Data Types":
         st.write("Let's learn about variables and data types in Python...")
@@ -227,7 +346,7 @@ def render_lesson_content(subsection):
             update_student_data(st.session_state.username, 'progress', progress)
             st.session_state.student_data[st.session_state.username] = get_student_data(st.session_state.username)
             st.success("Progress updated!")
-            st.experimental_rerun()
+            st.rerun()
     else:
         st.info("Content for this section is being developed...")
         if st.button("Mark Complete"):
@@ -245,7 +364,7 @@ def render_lesson_content(subsection):
             update_student_data(st.session_state.username, 'progress', progress)
             st.session_state.student_data[st.session_state.username] = get_student_data(st.session_state.username)
             st.success("Progress updated!")
-            st.experimental_rerun()
+            st.rerun()
 
     # Navigation buttons
     if st.session_state.current_level:
@@ -296,7 +415,7 @@ def main():
         if st.button("Return to Portal" if st.session_state.current_view == 'lessons' else "Go to Lessons",
                      use_container_width=True):
             st.session_state.current_view = 'portal' if st.session_state.current_view == 'lessons' else 'lessons'
-            st.experimental_rerun()
+            st.rerun()
 
         st.divider()
 

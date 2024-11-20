@@ -104,7 +104,6 @@ def get_assistant_response(assistant_id, thread_id, user_input):
         st.error(f'Error getting assistant response: {str(e)}')
         return 'I apologize, but I encountered an error. Please try again!'
 
-
 def main():
     st.title("🌤️ Weather Assistant")
     st.markdown("*Ask me about the weather in any location!*")

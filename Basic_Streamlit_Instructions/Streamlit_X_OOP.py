@@ -573,19 +573,36 @@ def putting_it_all_together():
         Let's see how all the pieces of your game work together:
         """)
 
-        st.mermaid("""
-        graph TD
-            A[Player Starts Game] --> B[Initialize Game State]
-            B --> C[Create Game World/Rooms]
-            C --> D[Game Loop Starts]
-            D --> E{Check Current Room}
-            E --> F[Show Status]
-            F --> G{Has Event?}
-            G -- Yes --> H[Run Event]
-            G -- No --> I[Allow Movement]
-            H --> D
-            I --> D
-        """)
+        # Replace mermaid with a visual flow using columns and emojis
+        st.write("### Game Flow Diagram")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.markdown("""
+            #### Game Start and Setup
+            🎮 Player Starts Game
+            ⬇️
+            🎲 Initialize Game State
+            ⬇️
+            🏗️ Create Game World/Rooms
+            ⬇️
+            🔄 Game Loop Starts
+            """)
+
+        with col2:
+            st.markdown("""
+            #### Game Loop Details
+            📍 Check Current Room
+            ⬇️
+            📊 Show Status
+            ⬇️
+            ❓ Check for Events
+            ⬇️
+            Either:
+            - 🎲 Run Event 
+            - 🚶‍♂️ Allow Movement
+            """)
 
         st.info("""
         🔍 The game cycle:
@@ -597,6 +614,22 @@ def putting_it_all_together():
         6. Repeat!
         """)
 
+        # Add detailed explanation
+        st.write("""
+        #### How It Works Step by Step:
+
+        1. **Game Initialization**:
+           - Set up initial game state (time, room, etc.)
+           - Create all rooms and their connections
+           - Set up events and mini-games
+
+        2. **Main Game Loop**:
+           - Display current room and status
+           - Check if there's an event (survivor or zombie horde)
+           - Handle player input (movement or event choices)
+           - Update game state based on actions
+           - Check win/lose conditions
+        """)
     with tabs[1]:
         st.header("Code Flow Example")
         st.write("Let's follow what happens when a player moves to a room with a survivor:")

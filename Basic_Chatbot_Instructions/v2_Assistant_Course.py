@@ -43,7 +43,6 @@ def introduction():
     st.markdown("Welcome, future AI developers! Let's dive into the exciting world of chatbots!")
 
     st.header("Welcome to the AI Chatbot Project! 🎉")
-    st.write("In this project, we're going to create an AI chatbot that thinks it's Kaiba from Yu-Gi-Oh!")
     st.write("Here's what we'll be doing:")
     st.markdown("""
     1. Setting up our project with the necessary tools 🛠️

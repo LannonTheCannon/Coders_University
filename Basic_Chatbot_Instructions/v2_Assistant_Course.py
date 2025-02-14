@@ -14,8 +14,8 @@ def main():
         "Setting Up the Project",
         "Creating the Assistant",
         "Building the Chat Interface",
-        "How It All Works",
-        "Fun with AI",
+        # "How It All Works",
+        # "Fun with AI",
         "Quiz Time!"
     ]
 

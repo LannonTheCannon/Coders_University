@@ -31,10 +31,10 @@ def main():
         creating_assistant()
     elif topic == "Building the Chat Interface":
         building_interface()
-    elif topic == "How It All Works":
-        how_it_works()
-    elif topic == "Fun with AI":
-        fun_with_ai()
+    # elif topic == "How It All Works":
+    #     how_it_works()
+    # elif topic == "Fun with AI":
+    #     fun_with_ai()
     elif topic == "Quiz Time!":
         quiz_time()
 

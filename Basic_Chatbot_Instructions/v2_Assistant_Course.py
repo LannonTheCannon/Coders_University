@@ -3,7 +3,7 @@
 import streamlit as st
 import base64
 from streamlit_ace import st_ace
-import random
+import secrets
 
 def main():
     st.set_page_config(page_title="AI Chatbot Project Explorer", page_icon="🤖", layout="wide")
@@ -499,7 +499,7 @@ def quiz_time():
     ]
 
     # Shuffle the questions
-    random.shuffle(questions)
+    secrets.SystemRandom().shuffle(questions)
 
     # Initialize session state for score if it doesn't exist
     if 'quiz_score' not in st.session_state:

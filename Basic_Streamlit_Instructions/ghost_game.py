@@ -1,5 +1,5 @@
-import random
 import time
+import secrets
 
 feeling_brave = True
 
@@ -52,7 +52,7 @@ while feeling_brave:
     time.sleep(1.5)
     user_input = int(input('Enter a door if you dare....'))
 
-    ghost_num = random.randint(1,3)
+    ghost_num = secrets.SystemRandom().randint(1,3)
 
     if ghost_num == user_input:
         print(ghost)
